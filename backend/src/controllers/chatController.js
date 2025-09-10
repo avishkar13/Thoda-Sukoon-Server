@@ -5,6 +5,8 @@ import axios from "axios";
 import translate from "@iamtraction/google-translate";
 import googleTTS from "google-tts-api";
 
+import { encryptMessage, safeDecryptMessage  } from "../utils/crypto.js";
+
 // --- Red flag keywords for distress detection ---
 const redFlags = {
   en: [
@@ -66,6 +68,7 @@ export const sendMessage = asyncHandler(async (req, res) => {
         - Be supportive, non-judgmental, and practical.
         - Suggest healthy coping strategies (breathing, journaling, sleep hygiene, mindfulness).
         - If user shows distress, encourage seeking professional help.
+        - Always reply in indian context and in user's language.
         User's name: ${req.user.name}.`,
     },
     ...chat.messages.map(msg => ({
@@ -106,29 +109,44 @@ export const sendMessage = asyncHandler(async (req, res) => {
     finalReply += userLang === "hi"
       ? "\n\n⚠️ लगता है कि आप कठिन समय से गुजर रहे हैं। कृपया तुरंत मदद लें। \n📞 टेली-मनोस हेल्पलाइन: 14416 / 1800-891-4416"
       : userLang === "bn"
-      ? "\n\n⚠️ মনে হচ্ছে আপনি কঠিন সময়ের মধ্যে দিয়ে যাচ্ছেন। অনুগ্রহ করে অবিলম্বে সাহায্য নিন। \n📞 টেলি-মানস হেল্পলাইন: 14416 / 1800-891-4416"
-      : "\n\n⚠️ It seems you’re going through a tough time. Please reach out for immediate help. \n📞 Tele-MANAS Helpline: 14416 / 1800-891-4416. \n📞 KIRAN Helpline: 1800-599-0019";
+        ? "\n\n⚠️ মনে হচ্ছে আপনি কঠিন সময়ের মধ্যে দিয়ে যাচ্ছেন। অনুগ্রহ করে অবিলম্বে সাহায্য নিন। \n📞 টেলি-মানস হেল্পলাইন: 14416 / 1800-891-4416"
+        : "\n\n⚠️ It seems you’re going through a tough time. Please reach out for immediate help. \n📞 Tele-MANAS Helpline: 14416 / 1800-891-4416. \n📞 KIRAN Helpline: 1800-599-0019";
   }
 
   // Step 7: Save conversation
-  chat.messages.push({ sender: "user", content: message });
-  chat.messages.push({ sender: "bot", content: finalReply });
+  chat.messages.push({ sender: "user", content: encryptMessage(message) });
+  chat.messages.push({ sender: "bot", content: encryptMessage(finalReply) });
   await chat.save();
 
-  res.json({ reply: finalReply, urgentReferral: urgent, chat });
+
+  res.json({
+  reply: finalReply,
+  urgentReferral: urgent,
+  chat: {
+    messages: chat.messages.map(msg => ({
+      sender: msg.sender,
+      content: safeDecryptMessage(msg.content),
+    })),
+   }
 });
 
-// get all user chats
+});
+
 export const getUserChats = asyncHandler(async (req, res) => {
   const userId = req.user._id;
   const chat = await Chat.findOne({ userId });
 
-  if (!chat) {
-    return res.json({ messages: [] });
-  }
+  if (!chat) return res.json({ messages: [] });
 
-  res.json(chat.messages);
+  const decryptedMessages = chat.messages.map((msg) => ({
+  sender: msg.sender,
+  content: msg.content ? safeDecryptMessage(msg.content) : "", 
+}));
+
+
+  res.json(decryptedMessages);
 });
+
 
 // 🎙️ Google-tts-api package
 export const textToSpeechHandler = asyncHandler(async (req, res) => {
@@ -136,13 +154,18 @@ export const textToSpeechHandler = asyncHandler(async (req, res) => {
   if (!text) return res.status(400).json({ message: "Text is required" });
 
   try {
-    const url = googleTTS.getAudioUrl(text, {
-      lang,
-      slow,
-      host: "https://translate.google.com",
-    });
+    // Break text into chunks (max ~200 chars each)
+    const chunks = text.match(/.{1,180}(\s|$)/g); // keep words intact
 
-    res.json({ audioUrl: url });
+    const audioUrls = chunks.map((chunk) =>
+      googleTTS.getAudioUrl(chunk, {
+        lang,
+        slow,
+        host: "https://translate.google.com",
+      })
+    );
+
+    res.json({ audioUrls });
   } catch (err) {
     console.error("TTS error:", err.message);
     res.status(500).json({ message: "TTS failed", error: err.message });

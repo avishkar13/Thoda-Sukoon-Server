@@ -3,17 +3,18 @@ import asyncHandler from "express-async-handler";
 import User from "../models/User.js";
 import Assessment from "../models/Assessment.js";
 import Chat from "../models/Chat.js";
+import Appointment from "../models/Appointment.js";
 
 // 📊 Dashboard stats
 export const getAdminStats = asyncHandler(async (req, res) => {
   const users = await User.countDocuments();
-  const counsellors = await User.countDocuments({ role: "counsellor" });
+  const bookings = await Appointment.countDocuments();
   const assessments = await Assessment.countDocuments();
   const chats = await Chat.countDocuments();
 
   res.json({
     users,
-    counsellors,
+    bookings,
     assessments,
     chats,
   });
@@ -69,7 +70,7 @@ export const getChatStats = asyncHandler(async (req, res) => {
     { $unwind: "$user" },
     // Optional: filter by college
     // { $match: { "user.collegeId": collegeId } },
-    {
+    { 
       $project: {
         aliasId: "$user.aliasId",
         role: "$user.role",

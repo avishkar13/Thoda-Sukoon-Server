@@ -1,0 +1,135 @@
+# Backend API List (Auto-Generated)
+
+## User APIs (/api/users)
+
+### POST /api/users/register
+- Register a new user (email/password or anonymous)
+- Request body:
+  - name: string (optional)
+  - email: string (optional, required for email registration)
+  - password: string (required if email is provided)
+  - role: string (optional, default: student)
+  - aliasId: string (optional)
+- Response: JWT token and user info
+
+### POST /api/users/login
+- Login with email and password
+- Request body:
+  - email: string (required)
+  - password: string (required)
+- Response: JWT token and user info
+
+### POST /api/users/google
+- Login/Register with Google
+- Request body:
+  - id_token: string (Google ID token, required)
+- Response: JWT token and user info
+
+### POST /api/users/logout
+- Logout user (blacklists JWT)
+- Headers: Authorization: Bearer <token>
+- Response: { message: "Logged out" }
+
+### GET /api/users/me
+- Get current user info
+- Headers: Authorization: Bearer <token>
+- Response: User object (no password)
+
+### GET /api/users/:id
+- Get user by ID (cached)
+- Headers: Authorization: Bearer <token>
+- Response: User object (no password)
+
+
+## Appointment APIs (/api/appointments)
+
+### POST /api/appointments/find
+- Find nearby counsellors
+- Headers: Authorization: Bearer <token>
+- Request body:
+  - lat: number (required)
+  - lng: number (required)
+- Response: List of counsellors
+
+### POST /api/appointments/book
+- Book an appointment
+- Headers: Authorization: Bearer <token>
+- Request body:
+  - counsellor: object (must include placeId)
+  - appointmentDate: date string
+- Response: Appointment object
+
+
+## Assessment APIs (/api/assessments)
+
+### POST /api/assessments/phq9
+- Submit PHQ-9 assessment
+- Headers: Authorization: Bearer <token>
+- Request body:
+  - responses: array of 9 numbers (required)
+- Response: Assessment object
+
+### POST /api/assessments/gad7
+- Submit GAD-7 assessment
+- Headers: Authorization: Bearer <token>
+- Request body:
+  - responses: array of 7 numbers (required)
+- Response: Assessment object
+
+### POST /api/assessments/ghq
+- Submit GHQ assessment
+- Headers: Authorization: Bearer <token>
+- Request body:
+  - responses: array of numbers (required)
+- Response: Assessment object
+
+
+## Chat APIs (/api/chats)
+
+### POST /api/chats/send
+- Send a message to the chatbot
+- Headers: Authorization: Bearer <token>
+- Request body:
+  - message: string (required)
+- Response: Bot reply, urgentReferral flag, chat history
+
+### GET /api/chats/history
+- Get user's chat history
+- Headers: Authorization: Bearer <token>
+- Response: Array of chat messages
+
+### POST /api/chats/tts
+- Text-to-speech for a message
+- Headers: Authorization: Bearer <token>
+- Request body:
+  - text: string (required)
+  - lang: string (optional, default: en)
+  - slow: boolean (optional)
+- Response: Audio URL
+
+
+## Admin APIs (/api/admin)
+
+### GET /api/admin/stats
+- Get dashboard stats (users, counsellors, assessments, chats)
+- Headers: Authorization: Bearer <admin token>
+- Response: Stats object
+
+### GET /api/admin/users
+- List all users
+- Headers: Authorization: Bearer <admin token>
+- Response: Array of users
+
+### GET /api/admin/assessments
+- List all assessments
+- Headers: Authorization: Bearer <admin token>
+- Response: Array of assessments
+
+### GET /api/admin/chats
+- Get chat statistics per user
+- Headers: Authorization: Bearer <admin token>
+- Response: Array of chat stats
+
+---
+
+This list is based on your current backend code and models. Update as you add more endpoints!

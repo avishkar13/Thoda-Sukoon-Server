@@ -21,8 +21,8 @@ export const submitPHQ9 = asyncHandler(async (req, res) => {
     const response = await axios.post(
       "https://openrouter.ai/api/v1/chat/completions",
       {
-        model: "nvidia/nemotron-nano-9b-v2",
-        messages: [
+        model: "meta-llama/llama-3.1-8b-instruct",
+        messages: [ 
           {
             role: "system",
             content: "You are a clinical psychologist summarizing PHQ-9 results empathetically.",

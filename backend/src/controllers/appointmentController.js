@@ -73,3 +73,10 @@ export const bookAppointment = asyncHandler(async (req, res) => {
 
   res.json({ message: "Appointment booked", appointment: newAppointment });
 });
+
+
+export const getUserBookings = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  const appointments = await Appointment.find({ userId }).sort({ appointmentDate: 1 });
+  res.json({ appointments });
+});

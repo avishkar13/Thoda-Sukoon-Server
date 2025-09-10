@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema(
     googleId: { type: String, unique: true, sparse: true },
     role: {
       type: String,
-      enum: ["student", "counsellor", "admin", "volunteer"],
+      enum: ["student", "admin", "volunteer"],
       default: "student",
     },
     aliasId: { type: String, unique: true }, // always required now
