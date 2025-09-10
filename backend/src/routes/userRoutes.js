@@ -1,5 +1,6 @@
 // src/routes/userRoutes.js
 import express from "express";
+import passport from "passport";
 import {
   registerUser,
   loginUser,

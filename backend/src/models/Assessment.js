@@ -10,8 +10,8 @@ const assessmentSchema = new mongoose.Schema({
     result: {
       type: String,
       enum: ["Minimal", "Mild", "Moderate", "Moderately severe", "Severe"],
-      default: "Minimal"
-    }
+      default: "Minimal",
+    },
   },
 
   gad7: {
@@ -20,14 +20,24 @@ const assessmentSchema = new mongoose.Schema({
     result: {
       type: String,
       enum: ["Minimal", "Mild", "Moderate", "Severe"],
-      default: "Minimal"
-    }
+      default: "Minimal",
+    },
   },
 
-  // NEW field to store AI-generated summary/interpretation
+  ghq: {
+    responses: [{ type: Number }], // usually 0–3 per question, depending on GHQ-12/28
+    total: { type: Number },
+    result: {
+      type: String,
+      enum: ["Normal", "Mild distress", "Moderate distress", "Severe distress"],
+      default: "Normal",
+    },
+  },
+
+  // AI-generated summary/interpretation
   summary: { type: String, default: "" },
 
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
 });
 
 export default mongoose.model("Assessment", assessmentSchema);

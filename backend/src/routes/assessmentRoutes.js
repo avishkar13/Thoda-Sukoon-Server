@@ -1,10 +1,12 @@
+// routes/assessmentRoutes.js
 import express from "express";
-import { submitAssessment } from "../controllers/assessmentController.js";
-import { protect } from "../middleware/authMiddleware.js"; //  auth middleware
+import { protect } from "../middleware/authMiddleware.js";
+import { submitPHQ9, submitGAD7, submitGHQ } from "../controllers/assessmentController.js";
 
 const router = express.Router();
 
-router.post("/", protect, submitAssessment);
-// router.get("/", protect, getAssessments);
+router.post("/phq9", protect, submitPHQ9);
+router.post("/gad7", protect, submitGAD7);
+router.post("/ghq", protect, submitGHQ);
 
 export default router;

@@ -1,16 +1,18 @@
+// src/models/User.js
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true },
-    email: { type: String, unique: true, sparse: true }, // allow alias users without email
-    password: { type: String }, // hashed, not required for alias mode
+    name: { type: String },
+    email: { type: String, unique: true, sparse: true },
+    password: { type: String },
+    googleId: { type: String, unique: true, sparse: true },
     role: {
       type: String,
       enum: ["student", "counsellor", "admin", "volunteer"],
       default: "student",
     },
-    aliasId: { type: String, unique: true, sparse: true }, // for anonymous mode
+    aliasId: { type: String, unique: true }, // always required now
     preferences: {
       language: { type: String, default: "en" },
       darkMode: { type: Boolean, default: false },
@@ -18,5 +20,15 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// generate aliasId automatically if missing
+userSchema.pre("save", function (next) {
+  if (!this.aliasId) {
+    this.aliasId = `user_${Date.now()}_${Math.random()
+      .toString(36)
+      .substring(2, 8)}`;
+  }
+  next();
+});
 
 export default mongoose.model("User", userSchema);

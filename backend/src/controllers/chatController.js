@@ -3,6 +3,7 @@ import asyncHandler from "express-async-handler";
 import Chat from "../models/Chat.js";
 import axios from "axios";
 import translate from "@iamtraction/google-translate";
+import googleTTS from "google-tts-api";
 
 // --- Red flag keywords for distress detection ---
 const redFlags = {
@@ -106,7 +107,7 @@ export const sendMessage = asyncHandler(async (req, res) => {
       ? "\n\n⚠️ लगता है कि आप कठिन समय से गुजर रहे हैं। कृपया तुरंत मदद लें। \n📞 टेली-मनोस हेल्पलाइन: 14416 / 1800-891-4416"
       : userLang === "bn"
       ? "\n\n⚠️ মনে হচ্ছে আপনি কঠিন সময়ের মধ্যে দিয়ে যাচ্ছেন। অনুগ্রহ করে অবিলম্বে সাহায্য নিন। \n📞 টেলি-মানস হেল্পলাইন: 14416 / 1800-891-4416"
-      : "\n\n⚠️ It seems you’re going through a tough time. Please reach out for immediate help. \n📞 Tele-MANAS Helpline: 14416 / 1800-891-4416";
+      : "\n\n⚠️ It seems you’re going through a tough time. Please reach out for immediate help. \n📞 Tele-MANAS Helpline: 14416 / 1800-891-4416. \n📞 KIRAN Helpline: 1800-599-0019";
   }
 
   // Step 7: Save conversation
@@ -127,4 +128,23 @@ export const getUserChats = asyncHandler(async (req, res) => {
   }
 
   res.json(chat.messages);
+});
+
+// 🎙️ Google-tts-api package
+export const textToSpeechHandler = asyncHandler(async (req, res) => {
+  const { text, lang = "en", slow = false } = req.body;
+  if (!text) return res.status(400).json({ message: "Text is required" });
+
+  try {
+    const url = googleTTS.getAudioUrl(text, {
+      lang,
+      slow,
+      host: "https://translate.google.com",
+    });
+
+    res.json({ audioUrl: url });
+  } catch (err) {
+    console.error("TTS error:", err.message);
+    res.status(500).json({ message: "TTS failed", error: err.message });
+  }
 });

@@ -14,7 +14,7 @@ import userRoutes from "./src/routes/userRoutes.js";
 import chatRoutes from "./src/routes/chatRoutes.js";
 import assessmentRoutes  from "./src/routes/assessmentRoutes.js";
 import appointmentRoutes from "./src/routes/appointmentRoutes.js";
-
+import adminRoutes from "./src/routes/adminRoutes.js";
 
 const app = express();
 
@@ -56,6 +56,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/assessments", assessmentRoutes);
 app.use("/api/appointments", appointmentRoutes);
+app.use("/api/admin", adminRoutes);
 
 
 // 404 handler

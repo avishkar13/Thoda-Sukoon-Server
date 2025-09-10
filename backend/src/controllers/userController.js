@@ -47,7 +47,15 @@ export const registerUser = asyncHandler(async (req, res) => {
     });
 
     const token = generateToken({ id: user._id });
-    res.status(201).json({ token, user: { id: user._id, name: user.name, role: user.role } });
+    res.status(201).json({
+  token,
+  user: {
+    id: user._id,
+    aliasId: user.aliasId,
+    role: user.role,
+  },
+});
+
   } else {
     // alias/anonymous user
     const user = await User.create({
@@ -85,7 +93,14 @@ export const loginUser = asyncHandler(async (req, res) => {
   }
 
   const token = generateToken({ id: user._id });
-  res.json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
+  res.json({
+  token,
+  user: {
+    id: user._id,
+    aliasId: user.aliasId,
+    role: user.role,
+  },
+});
 });
 
 /**
@@ -106,26 +121,41 @@ export const googleSignIn = asyncHandler(async (req, res) => {
   });
 
   const payload = ticket.getPayload();
-  // payload contains email, name, sub, picture, locale
   const { email, name, sub, picture } = payload;
 
   // find or create user
   let user = await User.findOne({ email });
+
   if (!user) {
+    // new user
     user = await User.create({
       name: name || "GoogleUser",
       email,
+      googleId: sub,
+      picture: picture || null,
       role: "student",
-      // you can store google sub in aliasId or another field if needed
     });
+  } else {
+    // existing user: update googleId/picture if missing or changed
+    if (!user.googleId) user.googleId = sub;
+    if (picture && user.picture !== picture) user.picture = picture;
+    await user.save();
   }
 
   const token = generateToken({ id: user._id });
+
   res.json({
-    token,
-    user: { id: user._id, name: user.name, email: user.email, role: user.role, picture },
-  });
+  token,
+  user: {
+    id: user._id,
+    aliasId: user.aliasId,
+    role: user.role,
+    picture: user.picture, 
+  },
 });
+
+});
+
 
 /**
  * @route GET /api/users/me
@@ -133,9 +163,13 @@ export const googleSignIn = asyncHandler(async (req, res) => {
  * @access Private
  */
 export const getMe = asyncHandler(async (req, res) => {
-  // req.user is set by protect middleware
-  const user = req.user;
-  res.json({ user });
+  const user = await User.findById(req.user._id).select("-password");
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  res.json(user); 
 });
 
 /**
