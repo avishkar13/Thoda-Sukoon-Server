@@ -26,18 +26,23 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function(origin, callback) {
-    // allow requests with no origin like mobile apps or curl
-    if (!origin) return callback(null, true);
+    if (!origin) return callback(null, true); // allow non-browser requests
     if (allowedOrigins.includes(origin)) return callback(null, true);
-    callback(new Error("CORS not allowed"));
+    return callback(new Error("CORS not allowed"));
   },
   credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // include OPTIONS for preflight
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
-app.use((req, res, next) => {
-  res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
-  res.setHeader("Cross-Origin-Embedder-Policy", "unsafe-none");
-  next();
-});
+
+// Let Express handle OPTIONS requests
+app.options("*", cors());
+
+// app.use((req, res, next) => {
+//   res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+//   res.setHeader("Cross-Origin-Embedder-Policy", "unsafe-none");
+//   next();
+// });
 app.use(express.json()); // parse JSON bodies
 app.use(morgan("dev")); // logs requests for debugging
 
