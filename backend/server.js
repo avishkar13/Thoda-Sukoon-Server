@@ -16,7 +16,7 @@ const app = express();
 // ----------------- CORS -----------------
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://thoda-sukoon-client.vercel.app"
+  "https://thoda-sukoon-client.onrender.com"
 ];
 
 app.use(cors({
