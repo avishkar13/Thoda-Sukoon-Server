@@ -19,10 +19,25 @@ import adminRoutes from "./src/routes/adminRoutes.js";
 const app = express();
 
 // Middleware
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://thoda-sukoon-client.vercel.app"
+];
+
 app.use(cors({
-  origin: "http://localhost:5173" || "https://thoda-sukoon-client.vercel.app/",
-  credentials: true
+  origin: function(origin, callback) {
+    // allow requests with no origin like mobile apps or curl
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new Error("CORS not allowed"));
+  },
+  credentials: true,
 }));
+app.use((req, res, next) => {
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+  res.setHeader("Cross-Origin-Embedder-Policy", "unsafe-none");
+  next();
+});
 app.use(express.json()); // parse JSON bodies
 app.use(morgan("dev")); // logs requests for debugging
 
