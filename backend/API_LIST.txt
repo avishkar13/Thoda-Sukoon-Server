@@ -86,19 +86,19 @@
 
 ## Chat APIs (/api/chats)
 
-### POST /api/chats/send
+### POST /api/chat/send
 - Send a message to the chatbot
 - Headers: Authorization: Bearer <token>
 - Request body:
   - message: string (required)
 - Response: Bot reply, urgentReferral flag, chat history
 
-### GET /api/chats/history
+### GET /api/chat/history
 - Get user's chat history
 - Headers: Authorization: Bearer <token>
 - Response: Array of chat messages
 
-### POST /api/chats/tts
+### POST /api/chat/tts
 - Text-to-speech for a message
 - Headers: Authorization: Bearer <token>
 - Request body:
