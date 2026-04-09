@@ -52,14 +52,22 @@ app.use("/api/admin", adminRoutes);
 app.use((req, res) => res.status(404).json({ message: "Route not found" }));
 
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: "Something went wrong", error: err.message });
+  // Use res.statusCode if it has been set, otherwise default to 500
+  const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
+  console.error(`[Error] ${req.method} ${req.url} - ${statusCode}: ${err.message}`);
+  res.status(statusCode).json({
+    message: err.message || "Something went wrong",
+    stack: process.env.NODE_ENV === "production" ? null : err.stack,
+  });
 });
 
 // ----------------- Start Server -----------------
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
+  if (!process.env.JWT_SECRET) {
+    console.error("❌ CRITICAL: JWT_SECRET is not defined in environment variables!");
+  }
   try {
     await connectDB();
 
