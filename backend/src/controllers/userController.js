@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
 
 import User from "../models/User.js";
-import { getCache, setCache, blacklistToken } from "../utils/cache.js";
+
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -24,48 +24,61 @@ const generateToken = (payload) => {
 export const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password, role = "student", aliasId } = req.body;
 
+  // 1. Email-based Registration
   if (email) {
-    // register with email
-    const existing = await User.findOne({ email });
+    const normalizedEmail = email.trim().toLowerCase();
+    const existing = await User.findOne({ email: normalizedEmail });
     if (existing) {
       res.status(400);
       throw new Error("Email already registered");
     }
+
     if (!password) {
       res.status(400);
       throw new Error("Password required for email registration");
     }
+
     const salt = await bcrypt.genSalt(10);
     const hashed = await bcrypt.hash(password, salt);
 
     const user = await User.create({
-      name,
-      email,
+      name: name?.trim() || "User",
+      email: normalizedEmail,
       password: hashed,
       role,
       aliasId: aliasId || undefined,
     });
 
     const token = generateToken({ id: user._id });
-    res.status(201).json({
-  token,
-  user: {
-    id: user._id,
-    aliasId: user.aliasId,
-    role: user.role,
-  },
-});
-
-  } else {
-    // alias/anonymous user
-    const user = await User.create({
-      name: name || "Anonymous",
-      role,
-      aliasId: aliasId || `anon_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,
+    return res.status(201).json({
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        aliasId: user.aliasId,
+        role: user.role,
+      },
     });
-    const token = generateToken({ id: user._id });
-    res.status(201).json({ token, user: { id: user._id, aliasId: user.aliasId, role: user.role } });
   }
+
+  // 2. Anonymous/Alias Registration
+  const user = await User.create({
+    name: name?.trim() || "Anonymous",
+    role,
+    aliasId: aliasId || `anon_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+  });
+
+  const token = generateToken({ id: user._id });
+  res.status(201).json({
+    token,
+    user: {
+      id: user._id,
+      name: user.name,
+      aliasId: user.aliasId,
+      role: user.role,
+    },
+  });
 });
 
 /**
@@ -97,6 +110,8 @@ export const loginUser = asyncHandler(async (req, res) => {
   token,
   user: {
     id: user._id,
+    name: user.name,
+    email: user.email,
     aliasId: user.aliasId,
     role: user.role,
   },
@@ -148,6 +163,8 @@ export const googleSignIn = asyncHandler(async (req, res) => {
   token,
   user: {
     id: user._id,
+    name: user.name,
+    email: user.email,
     aliasId: user.aliasId,
     role: user.role,
     picture: user.picture, 
@@ -172,45 +189,21 @@ export const getMe = asyncHandler(async (req, res) => {
   res.json(user); 
 });
 
-/**
- * @route GET /api/users/:id
- * @desc Get user by id, using cache
- * @access Private (or you can make public as needed)
- */
 export const getUserById = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const cacheKey = `user:${id}`;
-  // try cache
-  const cached = await getCache(cacheKey);
-  if (cached) {
-    return res.json({ source: "cache", user: cached });
-  }
-
   const user = await User.findById(id).select("-password");
   if (!user) {
     res.status(404);
     throw new Error("User not found");
   }
-
-  // set cache for 120 seconds
-  await setCache(cacheKey, user, 120);
   res.json({ source: "db", user });
 });
 
 /**
  * @route POST /api/users/logout
- * @desc Logout - blacklist token (simple approach)
+ * @desc Logout user
  * @access Private
  */
 export const logoutUser = asyncHandler(async (req, res) => {
-  // read token from header
-  const authHeader = req.headers.authorization || "";
-  const token = authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : null;
-  if (!token) {
-    return res.status(400).json({ message: "No token provided" });
-  }
-  // add to blacklist with TTL equal to remaining token life or a chosen TTL
-  // here we set 7 days TTL (customizable)
-  await blacklistToken(token, 60 * 60 * 24 * 7);
-  res.json({ message: "Logged out" });
+  res.json({ message: "Logged out successfully" });
 });

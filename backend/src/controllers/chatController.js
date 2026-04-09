@@ -27,7 +27,8 @@ const redFlags = {
 // --- Detect distress in user message ---
 const checkDistress = (text, lang) => {
   const flags = redFlags[lang] || redFlags["en"];
-  return flags.some(flag => text.toLowerCase().includes(flag.toLowerCase()));
+  const regex = new RegExp(flags.join("|"), "i");
+  return regex.test(text);
 };
 
 // --- Translation helpers ---
@@ -60,7 +61,9 @@ export const sendMessage = asyncHandler(async (req, res) => {
   let chat = await Chat.findOne({ userId });
   if (!chat) chat = new Chat({ userId, messages: [] });
 
-  // Step 3: Prepare conversation history for LLM
+  // Step 3: Prepare conversation history for LLM (Windowed to last 10 messages)
+  const historyWindow = chat.messages.slice(-10);
+  
   const llmMessages = [
     {
       role: "system",
@@ -71,9 +74,9 @@ export const sendMessage = asyncHandler(async (req, res) => {
         - Always reply in indian context and in user's language.
         User's name: ${req.user.name}.`,
     },
-    ...chat.messages.map(msg => ({
+    ...historyWindow.map(msg => ({
       role: msg.sender === "user" ? "user" : "assistant",
-      content: msg.content,
+      content: safeDecryptMessage(msg.content),
     })),
     { role: "user", content: englishMessage },
   ];

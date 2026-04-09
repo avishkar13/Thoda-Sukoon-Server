@@ -7,10 +7,12 @@ import Appointment from "../models/Appointment.js";
 
 // 📊 Dashboard stats
 export const getAdminStats = asyncHandler(async (req, res) => {
-  const users = await User.countDocuments();
-  const bookings = await Appointment.countDocuments();
-  const assessments = await Assessment.countDocuments();
-  const chats = await Chat.countDocuments();
+  const [users, bookings, assessments, chats] = await Promise.all([
+    User.countDocuments(),
+    Appointment.countDocuments(),
+    Assessment.countDocuments(),
+    Chat.countDocuments(),
+  ]);
 
   res.json({
     users,

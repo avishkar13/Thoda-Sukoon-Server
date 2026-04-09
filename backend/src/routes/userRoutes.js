@@ -11,10 +11,33 @@ import {
 } from "../controllers/userController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
+import { body } from "express-validator";
+import { validate } from "../middleware/validate.js";
+
 const router = express.Router();
 
-router.post("/register", registerUser);
-router.post("/login", loginUser);
+router.post(
+  "/register",
+  [
+    body("email").optional().isEmail().withMessage("Invalid email format"),
+    body("password")
+      .optional()
+      .isLength({ min: 6 })
+      .withMessage("Password must be at least 6 characters"),
+    validate,
+  ],
+  registerUser
+);
+
+router.post(
+  "/login",
+  [
+    body("email").isEmail().withMessage("Invalid email format"),
+    body("password").notEmpty().withMessage("Password is required"),
+    validate,
+  ],
+  loginUser
+);
 router.post("/google", googleSignIn);
 router.post("/logout", protect, logoutUser);
 

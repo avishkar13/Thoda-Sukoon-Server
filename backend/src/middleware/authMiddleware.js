@@ -2,7 +2,6 @@
 import jwt from "jsonwebtoken";
 import asyncHandler from "express-async-handler";
 import User from "../models/User.js";
-import { isTokenBlacklisted } from "../utils/cache.js";
 
 export const protect = asyncHandler(async (req, res, next) => {
   let token;
@@ -17,12 +16,6 @@ export const protect = asyncHandler(async (req, res, next) => {
     throw new Error("Not authorized, token missing");
   }
 
-  // check blacklist
-  const blacklisted = await isTokenBlacklisted(token);
-  if (blacklisted) {
-    res.status(401);
-    throw new Error("Token is invalidated (logged out)");
-  }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);

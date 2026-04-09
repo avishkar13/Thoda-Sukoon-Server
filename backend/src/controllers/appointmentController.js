@@ -65,6 +65,16 @@ export const bookAppointment = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "Counsellor and date are required" });
   }
 
+  // Conflict check: Has the user already booked a slot at this time?
+  const existing = await Appointment.findOne({
+    userId,
+    appointmentDate,
+  });
+
+  if (existing) {
+    return res.status(400).json({ message: "You already have an appointment booked at this time" });
+  }
+
   const newAppointment = await Appointment.create({
     userId,
     counsellor,
